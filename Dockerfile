@@ -1,21 +1,14 @@
-FROM python:3.12-slim-bullseye
+# Set Python path
+ENV PYTHONPATH=/code
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
-ENV PATH=/opt/venv/bin:$PATH
+# create a bash script to run the Django project
+RUN printf "#!/bin/bash\n" > ./paracord_runner.sh && \
+    printf "RUN_PORT=\"\${PORT:-8000}\"\n\n" >> ./paracord_runner.sh && \
+    printf "python manage.py migrate --no-input\n" >> ./paracord_runner.sh && \
+    printf "gunicorn main.wsgi:application --bind \"[::]:\$RUN_PORT\"\n" >> ./paracord_runner.sh
 
-RUN apt-get update && apt-get install -y \
-    libpq-dev libjpeg-dev libcairo2 gcc \
-    && rm -rf /var/lib/apt/lists/*
+# make the bash script executable
+RUN chmod +x paracord_runner.sh
 
-RUN python -m venv /opt/venv
-RUN pip install --upgrade pip
-
-WORKDIR /code
-
-COPY requirements.txt /tmp/requirements.txt
-COPY ./src /code
-
-RUN pip install -r /tmp/requirements.txt
-
-CMD ["bash", "-c", "python manage.py migrate --no-input && gunicorn main.wsgi:application --bind [::]:${PORT:-8000}"]
+# Run the Django project via the runtime script when the container starts
+CMD ./paracord_runner.sh
