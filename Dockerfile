@@ -18,4 +18,4 @@ COPY ./src /code
 
 RUN pip install -r /tmp/requirements.txt
 
-CMD ["bash", "-c", "python manage.py migrate --no-input && gunicorn saas.wsgi:application --bind [::]:${PORT:-8000}"]
+CMD ["bash", "-c", "python manage.py migrate --no-input && gunicorn main.wsgi:application --bind [::]:${PORT:-8000}"]
